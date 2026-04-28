@@ -14,6 +14,8 @@ from screens.cadastro import CadastroPerda
 from screens.disponiveis import ItensDisponiveis
 from screens.admin import AdminPanel
 from screens.detalhe import DetalheItem
+import customtkinter as ctk
+from tkinter import messagebox
 
 
 # ============================================
@@ -21,6 +23,7 @@ from screens.detalhe import DetalheItem
 # ============================================
 ctk.set_appearance_mode("light")  # Forçar modo claro
 ctk.set_default_color_theme("blue")  # Será sobrescrito pelas nossas cores
+
 
 
 class App(ctk.CTk):
@@ -79,8 +82,9 @@ class App(ctk.CTk):
             self._navegar("admin")
 
     def _logout(self):
-        """Callback de logout."""
-        self._mostrar_login()
+        """Callback de logout com confirmação."""
+        if messagebox.askyesno("Sair", "Deseja realmente sair da sua conta?"):
+            self._mostrar_login()
 
     def _navegar(self, destino, dados=None):
         """
@@ -138,6 +142,8 @@ class App(ctk.CTk):
 
         if self.tela_atual:
             self.tela_atual.pack(fill="both", expand=True)
+
+
 
 
 # ============================================
