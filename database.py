@@ -279,6 +279,7 @@ def buscar_item(item_id):
 
 def cadastrar_item(tipo, usuario_id, nome, categoria, local, descricao, foto_url, data_ocorrido=None):
     """Cadastra um novo item (perda ou achado)."""
+    nome = nome.strip().title()
     conn = get_conn()
     c = conn.cursor()
     c.execute("""
