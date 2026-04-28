@@ -33,7 +33,7 @@ class App(ctk.CTk):
         self.title(APP_TITLE)
         self.geometry(f"{APP_WIDTH}x{APP_HEIGHT}")
         self.minsize(APP_MIN_WIDTH, APP_MIN_HEIGHT)
-        self.configure(fg_color=COLORS["ink_25"])
+        self.title(f"{APP_TITLE} - v1.1") # Alteração de teste para PR
 
         # Centraliza na tela
         self.update_idletasks()
