@@ -1,11 +1,11 @@
 """
-screens/cadastro.py — Cadastro de item perdido (Versão com Validação de Data)
+screens/cadastro.py — Cadastro de item perdido
 
 Formulário com:
 - Nome do item
 - Categorias em chips clicáveis
 - Local (dropdown)
-- Data (com validação de formato)
+- Data
 - Descrição
 - Upload de foto (via API ImgBB)
 """
@@ -44,8 +44,7 @@ class CadastroPerda(ctk.CTkFrame):
         app_bar.pack(fill="x", side="top")
 
         # Body scrollável
-        body = ctk.CTkScrollableFrame(
-            self, fg_color=COLORS["ink_25"], corner_radius=0)
+        body = ctk.CTkScrollableFrame(self, fg_color=COLORS["ink_25"], corner_radius=0)
         body.pack(fill="both", expand=True)
 
         wrapper = ctk.CTkFrame(body, fg_color="transparent")
@@ -81,8 +80,7 @@ class CadastroPerda(ctk.CTkFrame):
 
         # === Nome do item ===
         self._label(form_inner, "Nome do item *")
-        self.entry_nome = self._entry(
-            form_inner, "Ex: Fone bluetooth JBL preto Tune 510BT")
+        self.entry_nome = self._entry(form_inner, "Ex: Fone bluetooth JBL preto Tune 510BT")
 
         # === Categoria ===
         self._label(form_inner, "Categoria *", pady_top=18)
@@ -138,8 +136,7 @@ class CadastroPerda(ctk.CTkFrame):
         data_col = ctk.CTkFrame(linha_frame, fg_color="transparent")
         data_col.grid(row=0, column=1, sticky="ew", padx=(8, 0))
         self._label(data_col, "Quando aconteceu?")
-        self.entry_data = self._entry(
-            data_col, datetime.now().strftime("%Y-%m-%d"))
+        self.entry_data = self._entry(data_col, datetime.now().strftime("%Y-%m-%d"))
         self.entry_data.delete(0, "end")
         self.entry_data.insert(0, datetime.now().strftime("%Y-%m-%d"))
 
@@ -158,8 +155,7 @@ class CadastroPerda(ctk.CTkFrame):
         self.text_desc.pack(fill="x")
 
         # === Upload de foto ===
-        self._label(
-            form_inner, "Foto do item (opcional, mas recomendado)", pady_top=18)
+        self._label(form_inner, "Foto do item (opcional, mas recomendado)", pady_top=18)
 
         self.upload_frame = ctk.CTkFrame(
             form_inner,
@@ -182,10 +178,8 @@ class CadastroPerda(ctk.CTkFrame):
         )
         self.upload_label.pack(expand=True)
 
-        self.upload_frame.bind(
-            "<Button-1>", lambda e: self._escolher_arquivo())
-        self.upload_label.bind(
-            "<Button-1>", lambda e: self._escolher_arquivo())
+        self.upload_frame.bind("<Button-1>", lambda e: self._escolher_arquivo())
+        self.upload_label.bind("<Button-1>", lambda e: self._escolher_arquivo())
 
         # === Botões ===
         botoes = ctk.CTkFrame(form_inner, fg_color="transparent")
@@ -283,34 +277,23 @@ class CadastroPerda(ctk.CTkFrame):
         data = self.entry_data.get().strip()
         descricao = self.text_desc.get("1.0", "end").strip()
 
-        # --- INÍCIO DA VALIDAÇÃO (Contribuição Individual) ---
+        # Validações
         if not nome or len(nome) < 3:
-            messagebox.showerror(
-                "Erro", "Por favor, informe o nome do item (mínimo 3 caracteres).")
+            messagebox.showerror("Erro", "Por favor, informe o nome do item (mínimo 3 caracteres).")
             return
 
         if not self.categoria_selecionada:
             messagebox.showerror("Erro", "Por favor, selecione uma categoria.")
             return
 
-        try:
-            # Tenta converter a string para data para validar o formato
-            datetime.strptime(data, "%Y-%m-%d")
-        except ValueError:
-            messagebox.showerror(
-                "Erro", "Formato de data inválido. Use o padrão AAAA-MM-DD (Ex: 2026-04-28).")
-            return
-
         if not local or local == "Selecione...":
             messagebox.showerror("Erro", "Por favor, selecione onde perdeu.")
             return
-        # --- FIM DA VALIDAÇÃO ---
 
         # Upload da imagem (se houver)
         foto_url = None
         if self.foto_caminho:
-            self.upload_label.configure(
-                text="⏳  Fazendo upload...", text_color=COLORS["ink_500"])
+            self.upload_label.configure(text="⏳  Fazendo upload...", text_color=COLORS["ink_500"])
             self.update()
             foto_url = upload_imagem(self.foto_caminho)
 

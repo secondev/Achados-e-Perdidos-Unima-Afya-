@@ -46,8 +46,7 @@ class App(ctk.CTk):
         self.tela_atual = None
 
         # Container principal (todas as telas vão aqui)
-        self.container = ctk.CTkFrame(
-            self, fg_color=COLORS["ink_25"], corner_radius=0)
+        self.container = ctk.CTkFrame(self, fg_color=COLORS["ink_25"], corner_radius=0)
         self.container.pack(fill="both", expand=True)
 
         # Inicia banco e mostra login
@@ -64,8 +63,7 @@ class App(ctk.CTk):
         """Mostra a tela de login."""
         self._limpar_tela()
         self.usuario_atual = None
-        self.tela_atual = LoginScreen(
-            self.container, on_login=self._fazer_login)
+        self.tela_atual = LoginScreen(self.container, on_login=self._fazer_login)
         self.tela_atual.pack(fill="both", expand=True)
 
     def _fazer_login(self, usuario):

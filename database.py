@@ -375,21 +375,6 @@ def listar_historico_status(item_id):
     conn.close()
     return [dict(r) for r in rows]
 
-import re
-
-def validar_dados_item(nome, categoria, local):
-    """Verifica se os campos obrigatórios estão preenchidos."""
-    if not nome.strip() or not categoria or not local:
-        return False, "Nome, Categoria e Local são obrigatórios."
-    return True, ""
-
-def validar_email(email):
-    """Valida o formato do e-mail acadêmico."""
-    padrao = r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$'
-    if re.match(padrao, email.lower()):
-        return True
-    return False
-
 
 # ============================================
 # UTILITÁRIOS
