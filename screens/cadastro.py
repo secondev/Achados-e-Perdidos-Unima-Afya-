@@ -98,7 +98,7 @@ class CadastroPerda(ctk.CTkFrame):
                 text_color=COLORS["ink_700"],
                 border_color=COLORS["ink_100"],
                 border_width=1,
-                hover_color=COLORS["ink_50"],
+                hover_color=COLORS["magenta_50"],
                 corner_radius=20,
                 height=34,
                 command=lambda c=cat: self._selecionar_categoria(c["nome"])
@@ -127,7 +127,7 @@ class CadastroPerda(ctk.CTkFrame):
             button_hover_color=COLORS["ink_200"],
             dropdown_fg_color=COLORS["white"],
             dropdown_text_color=COLORS["ink_700"],
-            dropdown_hover_color=COLORS["ink_50"],
+            dropdown_hover_color=COLORS["ink_100"],
             height=40,
             corner_radius=10,
         )
@@ -199,7 +199,7 @@ class CadastroPerda(ctk.CTkFrame):
             text_color=COLORS["ink_700"],
             border_color=COLORS["ink_100"],
             border_width=1,
-            hover_color=COLORS["ink_50"],
+            hover_color=COLORS["ink_100"],
             corner_radius=10,
             height=42, width=110,
             command=lambda: self.on_navigate("inicio")

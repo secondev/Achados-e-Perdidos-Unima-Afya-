@@ -55,7 +55,7 @@ class DetalheItem(ctk.CTkFrame):
             text_color=COLORS["ink_700"],
             border_color=COLORS["ink_100"],
             border_width=1,
-            hover_color=COLORS["ink_50"],
+            hover_color=COLORS["ink_100"],
             corner_radius=10,
             height=34, width=90,
             command=lambda: self.on_navigate(
@@ -244,7 +244,7 @@ class DetalheItem(ctk.CTkFrame):
                 font=("Segoe UI", 11, "bold"),
                 fg_color=bg,
                 text_color=fg,
-                hover_color=COLORS["ink_100"],
+                hover_color=COLORS["ink_200"],
                 corner_radius=8,
                 height=34,
                 command=lambda s=status: self._mudar_status(s)

@@ -132,7 +132,7 @@ class HomeAluno(ctk.CTkFrame):
             font=("Segoe UI", 13, "bold"),
             fg_color=COLORS["white"],
             text_color=COLORS["magenta"],
-            hover_color=COLORS["ink_50"],
+            hover_color=COLORS["magenta_50"],
             corner_radius=10,
             height=40, width=160,
             command=lambda: self.on_navigate("cadastrar")

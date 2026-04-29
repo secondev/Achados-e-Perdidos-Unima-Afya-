@@ -1,3 +1,4 @@
+
 """
 components/widgets.py — Componentes visuais reutilizáveis
 
@@ -91,7 +92,7 @@ class AppBar(ctk.CTkFrame):
                 font=("Segoe UI", 12, "bold" if is_active else "normal"),
                 fg_color=COLORS["magenta_50"] if is_active else "transparent",
                 text_color=COLORS["magenta"] if is_active else COLORS["ink_500"],
-                hover_color=COLORS["ink_50"],
+                hover_color=COLORS["magenta_100"] if is_active else COLORS["magenta_50"],
                 corner_radius=8,
                 height=32,
                 width=110 if "achados" in label.lower() or "recebidos" in label.lower() else 90,
@@ -133,7 +134,7 @@ class AppBar(ctk.CTkFrame):
             font=("Segoe UI", 11),
             fg_color="transparent",
             text_color=COLORS["ink_500"],
-            hover_color=COLORS["ink_50"],
+            hover_color=COLORS["ink_100"],
             width=50, height=28,
             corner_radius=14,
             command=on_logout

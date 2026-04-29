@@ -98,7 +98,7 @@ class ItensDisponiveis(ctk.CTkFrame):
             text_color=COLORS["white"] if ativo else COLORS["ink_700"],
             border_color=COLORS["ink_100"],
             border_width=1,
-            hover_color=COLORS["ink_50"] if not ativo else COLORS["ink_700"],
+            hover_color=COLORS["ink_200"] if not ativo else COLORS["ink_700"],
             corner_radius=10,
             height=36, width=100,
             command=lambda v=valor: self._on_filtro(v)
