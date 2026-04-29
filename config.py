@@ -2,21 +2,31 @@
 config.py — Configurações globais do Achados Unima Afya
 
 Define cores da identidade visual da Afya (magenta), fontes,
-tamanhos e a chave da API ImgBB.
+tamanhos, paletas claro/escuro e a chave da API ImgBB.
 """
 
 # ============================================
 # IDENTIDADE VISUAL — CORES OFICIAIS DA AFYA
 # ============================================
-COLORS = {
-    # Magenta — cor principal da Afya Unima
-    "magenta": "#E6007E",
-    "magenta_dark": "#B30062",
-    "magenta_light": "#FF4DA6",
-    "magenta_50": "#FDF2F8",
-    "magenta_100": "#FCE7F3",
+# Magenta é fixo nas duas paletas (cor da marca)
+MAGENTA = "#E6007E"
+MAGENTA_DARK = "#B30062"
+MAGENTA_LIGHT = "#FF4DA6"
+MAGENTA_50 = "#FDF2F8"
+MAGENTA_100 = "#FCE7F3"
 
-    # Tons de cinza
+# ============================================
+# PALETA TEMA CLARO
+# ============================================
+LIGHT_THEME = {
+    # Magenta (cor da marca)
+    "magenta": MAGENTA,
+    "magenta_dark": MAGENTA_DARK,
+    "magenta_light": MAGENTA_LIGHT,
+    "magenta_50": MAGENTA_50,
+    "magenta_100": MAGENTA_100,
+
+    # Tons de cinza (fundo claro)
     "ink_900": "#0A0A0B",
     "ink_700": "#27272A",
     "ink_500": "#52525B",
@@ -28,7 +38,7 @@ COLORS = {
     "ink_25": "#FAFAFA",
     "white": "#FFFFFF",
 
-    # Status
+    # Status (cores fixas pros badges)
     "status_aberto_bg": "#F4F4F5",
     "status_aberto_fg": "#52525B",
     "status_analise_bg": "#FEF3C7",
@@ -45,6 +55,106 @@ COLORS = {
     "warning": "#F59E0B",
     "danger": "#EF4444",
 }
+
+# ============================================
+# PALETA TEMA ESCURO
+# ============================================
+DARK_THEME = {
+    # Magenta (cor da marca - mesma)
+    "magenta": MAGENTA,
+    "magenta_dark": MAGENTA_DARK,
+    "magenta_light": MAGENTA_LIGHT,
+    "magenta_50": "#2D0A1E",      # versão escura do magenta_50
+    "magenta_100": "#4A1132",     # versão escura do magenta_100
+
+    # Tons invertidos (fundo escuro)
+    "ink_900": "#FAFAFA",         # texto principal vira branco
+    "ink_700": "#E4E4E7",         # texto secundário claro
+    "ink_500": "#A1A1AA",         # texto terciário cinza claro
+    "ink_400": "#71717A",         # texto fraco
+    "ink_300": "#52525B",         # bordas mais visíveis
+    "ink_200": "#3F3F46",         # bordas
+    "ink_100": "#27272A",         # bordas sutis e fundo de cards
+    "ink_50": "#1F1F23",          # fundo de elementos
+    "ink_25": "#18181B",          # fundo principal
+    "white": "#27272A",           # "branco" no escuro = cinza escuro (cards)
+
+    # Status (cores adaptadas pro dark)
+    "status_aberto_bg": "#3F3F46",
+    "status_aberto_fg": "#D4D4D8",
+    "status_analise_bg": "#451A03",
+    "status_analise_fg": "#FCD34D",
+    "status_encontrado_bg": "#1E3A5F",
+    "status_encontrado_fg": "#93C5FD",
+    "status_devolvido_bg": "#064E3B",
+    "status_devolvido_fg": "#6EE7B7",
+    "status_naoachado_bg": "#7F1D1D",
+    "status_naoachado_fg": "#FCA5A5",
+
+    # Outros
+    "success": "#10B981",
+    "warning": "#F59E0B",
+    "danger": "#EF4444",
+}
+
+# ============================================
+# GERENCIADOR DE TEMA
+# ============================================
+# Tema atual (começa em light por padrão)
+_tema_atual = "light"
+
+# COLORS aponta dinamicamente pra paleta atual
+# IMPORTANTE: as telas leem COLORS["chave"], então quando alteramos
+# o tema, todas as referências futuras pegam as novas cores
+COLORS = dict(LIGHT_THEME)
+
+
+def get_tema():
+    """Retorna o tema atual ('light' ou 'dark')."""
+    return _tema_atual
+
+
+def alternar_tema():
+    """
+    Alterna entre tema claro e escuro.
+    Atualiza o dicionário COLORS in-place pra que as referências
+    existentes nas telas peguem as novas cores ao re-renderizar.
+    """
+    global _tema_atual
+
+    if _tema_atual == "light":
+        _tema_atual = "dark"
+        nova_paleta = DARK_THEME
+    else:
+        _tema_atual = "light"
+        nova_paleta = LIGHT_THEME
+
+    # Atualiza COLORS in-place (mantém a referência)
+    COLORS.clear()
+    COLORS.update(nova_paleta)
+
+    return _tema_atual
+
+
+def aplicar_tema(tema):
+    """
+    Define o tema explicitamente ('light' ou 'dark').
+    Útil pra carregar preferência salva.
+    """
+    global _tema_atual
+
+    if tema == "dark":
+        _tema_atual = "dark"
+        nova_paleta = DARK_THEME
+    else:
+        _tema_atual = "light"
+        nova_paleta = LIGHT_THEME
+
+    COLORS.clear()
+    COLORS.update(nova_paleta)
+
+    return _tema_atual
+
 
 # ============================================
 # FONTES
@@ -103,9 +213,6 @@ STATUS = {
 # ============================================
 # API IMGBB
 # ============================================
-# Para upload real de imagens, coloque aqui sua API key gratuita
-# Crie em: https://api.imgbb.com (após criar conta em imgbb.com)
-# Se deixar vazio, o sistema funciona em modo offline (sem upload real)
 IMGBB_API_KEY = ""
 
 # ============================================
