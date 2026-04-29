@@ -1,12 +1,16 @@
 """
 main.py — Ponto de entrada do Achados Unima Afya
 
-Inicializa a janela principal, gerencia navegação entre telas
-e mantém o estado do usuário logado.
+Inicializa a janela principal, gerencia navegação entre telas,
+mantém o estado do usuário logado e gerencia o tema (claro/escuro).
 """
 
 import customtkinter as ctk
-from config import COLORS, APP_TITLE, APP_WIDTH, APP_HEIGHT, APP_MIN_WIDTH, APP_MIN_HEIGHT
+from tkinter import messagebox
+from config import (
+    COLORS, APP_TITLE, APP_WIDTH, APP_HEIGHT,
+    APP_MIN_WIDTH, APP_MIN_HEIGHT, get_tema
+)
 import database as db
 from screens.login import LoginScreen
 from screens.home_aluno import HomeAluno
@@ -14,16 +18,13 @@ from screens.cadastro import CadastroPerda
 from screens.disponiveis import ItensDisponiveis
 from screens.admin import AdminPanel
 from screens.detalhe import DetalheItem
-import customtkinter as ctk
-from tkinter import messagebox
 
 
 # ============================================
 # CONFIGURAÇÃO INICIAL DO CUSTOMTKINTER
 # ============================================
-ctk.set_appearance_mode("light")  # Forçar modo claro
-ctk.set_default_color_theme("blue")  # Será sobrescrito pelas nossas cores
-
+ctk.set_appearance_mode("light")
+ctk.set_default_color_theme("blue")
 
 
 class App(ctk.CTk):
@@ -32,111 +33,109 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        # Configurações da janela
         self.title(APP_TITLE)
         self.geometry(f"{APP_WIDTH}x{APP_HEIGHT}")
         self.minsize(APP_MIN_WIDTH, APP_MIN_HEIGHT)
         self.configure(fg_color=COLORS["ink_25"])
 
-        # Centraliza na tela
+        # Centraliza
         self.update_idletasks()
         x = (self.winfo_screenwidth() // 2) - (APP_WIDTH // 2)
         y = (self.winfo_screenheight() // 2) - (APP_HEIGHT // 2)
         self.geometry(f"{APP_WIDTH}x{APP_HEIGHT}+{x}+{y}")
 
-        # Estado da aplicação
+        # Estado
         self.usuario_atual = None
         self.tela_atual = None
+        self.tela_atual_nome = None      # Nome da tela atual (pra re-renderizar)
+        self.tela_atual_dados = None     # Dados da tela atual (pra re-renderizar)
 
-        # Container principal (todas as telas vão aqui)
         self.container = ctk.CTkFrame(
-            self, fg_color=COLORS["ink_25"], corner_radius=0)
+            self, fg_color=COLORS["ink_25"], corner_radius=0
+        )
         self.container.pack(fill="both", expand=True)
 
-        # Inicia banco e mostra login
         db.init_db()
         self._mostrar_login()
 
     def _limpar_tela(self):
-        """Remove a tela atual antes de mostrar uma nova."""
         if self.tela_atual:
             self.tela_atual.destroy()
             self.tela_atual = None
 
     def _mostrar_login(self):
-        """Mostra a tela de login."""
         self._limpar_tela()
         self.usuario_atual = None
-        self.tela_atual = LoginScreen(
-            self.container, on_login=self._fazer_login)
+        self.tela_atual_nome = "login"
+        self.tela_atual_dados = None
+        # LoginScreen não tem theme toggle (tela pré-login)
+        self.tela_atual = LoginScreen(self.container, on_login=self._fazer_login)
         self.tela_atual.pack(fill="both", expand=True)
 
     def _fazer_login(self, usuario):
-        """Callback quando usuário seleciona um perfil no login."""
         self.usuario_atual = usuario
-
-        # Aluno → Home; Funcionário → Painel admin
         if usuario["tipo"] == "aluno":
             self._navegar("inicio")
         else:
             self._navegar("admin")
 
     def _logout(self):
-        """Callback de logout com confirmação."""
         if messagebox.askyesno("Sair", "Deseja realmente sair da sua conta?"):
             self._mostrar_login()
 
-    def _navegar(self, destino, dados=None):
+    def _on_theme_change(self, novo_tema):
         """
-        Navega entre telas.
+        Callback quando o usuário alterna o tema.
+        Re-renderiza a tela atual com as novas cores e atualiza o fundo da janela.
+        """
+        # Atualiza o fundo da janela e do container
+        self.configure(fg_color=COLORS["ink_25"])
+        self.container.configure(fg_color=COLORS["ink_25"])
 
-        Args:
-            destino: nome da tela ('inicio', 'cadastrar', 'disponiveis', 'admin', 'detalhe')
-            dados: dados adicionais (ex: item ao ir para 'detalhe')
-        """
+        # Atualiza o appearance_mode do CustomTkinter (afeta dialogs e scrollbars nativas)
+        ctk.set_appearance_mode("dark" if novo_tema == "dark" else "light")
+
+        # Re-renderiza a tela atual com as novas cores
+        if self.tela_atual_nome:
+            self._navegar(self.tela_atual_nome, self.tela_atual_dados)
+
+    def _navegar(self, destino, dados=None):
+        """Navega entre telas. Salva o destino atual pra permitir re-renderizar no toggle."""
         self._limpar_tela()
+        self.tela_atual_nome = destino
+        self.tela_atual_dados = dados
+
+        kwargs_comum = {
+            "on_navigate": self._navegar,
+            "on_logout": self._logout,
+            "on_theme_change": self._on_theme_change,
+        }
 
         if destino == "inicio":
             self.tela_atual = HomeAluno(
-                self.container,
-                self.usuario_atual,
-                on_navigate=self._navegar,
-                on_logout=self._logout
+                self.container, self.usuario_atual, **kwargs_comum
             )
         elif destino == "cadastrar":
             self.tela_atual = CadastroPerda(
-                self.container,
-                self.usuario_atual,
-                on_navigate=self._navegar,
-                on_logout=self._logout
+                self.container, self.usuario_atual, **kwargs_comum
             )
         elif destino == "disponiveis":
             self.tela_atual = ItensDisponiveis(
-                self.container,
-                self.usuario_atual,
-                on_navigate=self._navegar,
-                on_logout=self._logout
+                self.container, self.usuario_atual, **kwargs_comum
             )
         elif destino == "admin":
             self.tela_atual = AdminPanel(
-                self.container,
-                self.usuario_atual,
-                on_navigate=self._navegar,
-                on_logout=self._logout
+                self.container, self.usuario_atual, **kwargs_comum
             )
         elif destino == "detalhe":
-            # Recarrega o item do banco (caso tenha sido atualizado)
             item = db.buscar_item(dados["id"]) if dados else None
             if item:
                 self.tela_atual = DetalheItem(
-                    self.container,
-                    self.usuario_atual,
-                    item=item,
-                    on_navigate=self._navegar,
-                    on_logout=self._logout
+                    self.container, self.usuario_atual, item=item, **kwargs_comum
                 )
+                # Salva o item recarregado como dados atuais (pra re-renderizar mantendo o mesmo)
+                self.tela_atual_dados = item
             else:
-                # Se item não existe, volta pro início
                 self._navegar("inicio")
                 return
 
@@ -144,11 +143,6 @@ class App(ctk.CTk):
             self.tela_atual.pack(fill="both", expand=True)
 
 
-
-
-# ============================================
-# EXECUÇÃO
-# ============================================
 if __name__ == "__main__":
     app = App()
     app.mainloop()
