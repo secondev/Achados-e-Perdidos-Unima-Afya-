@@ -18,6 +18,7 @@ from screens.cadastro import CadastroPerda
 from screens.disponiveis import ItensDisponiveis
 from screens.admin import AdminPanel
 from screens.detalhe import DetalheItem
+from screens.dashboard import DashboardFuncionario
 
 
 # ============================================
@@ -105,10 +106,11 @@ class App(ctk.CTk):
         self.tela_atual_nome = destino
         self.tela_atual_dados = dados
 
+        # CORREÇÃO: Removemos o 'on_theme_change' daqui para não causar erros
+        # (TypeError) em telas que não possuem esse parâmetro no __init__.
         kwargs_comum = {
             "on_navigate": self._navegar,
             "on_logout": self._logout,
-            "on_theme_change": self._on_theme_change,
         }
 
         if destino == "inicio":
@@ -125,6 +127,10 @@ class App(ctk.CTk):
             )
         elif destino == "admin":
             self.tela_atual = AdminPanel(
+                self.container, self.usuario_atual, **kwargs_comum
+            )
+        elif destino == "dashboard":
+            self.tela_atual = DashboardFuncionario(
                 self.container, self.usuario_atual, **kwargs_comum
             )
         elif destino == "detalhe":
