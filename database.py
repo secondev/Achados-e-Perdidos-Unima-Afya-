@@ -384,3 +384,63 @@ def reset_db():
     if os.path.exists(DB_FILE):
         os.remove(DB_FILE)
     init_db()
+
+
+# ============================================
+# FUNÇÕES DE ESTATÍSTICAS (NOVO DASHBOARD)
+# ============================================
+
+def get_itens_por_categoria():
+    """Conta a quantidade total de itens (perdas e achados) agrupados por categoria."""
+    conn = get_conn()
+    rows = conn.execute("""
+        SELECT categoria, COUNT(*) as total 
+        FROM itens 
+        GROUP BY categoria 
+        ORDER BY total DESC
+    """).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_locais_frequentes():
+    """Retorna o Top 5 locais com o maior número de ocorrências."""
+    conn = get_conn()
+    rows = conn.execute("""
+        SELECT local, COUNT(*) as total 
+        FROM itens 
+        GROUP BY local 
+        ORDER BY total DESC 
+        LIMIT 5
+    """).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_taxa_devolucao():
+    """Conta a quantidade de itens agrupados pelo seu status atual."""
+    conn = get_conn()
+    rows = conn.execute("""
+        SELECT status, COUNT(*) as total 
+        FROM itens 
+        GROUP BY status
+    """).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_tempo_medio_resolucao():
+    """
+    Calcula a média de dias que um item demora desde a sua criação
+    até mudar para o status de 'devolvido'.
+    """
+    conn = get_conn()
+    row = conn.execute("""
+        SELECT AVG(julianday(h.criado_em) - julianday(i.criado_em)) as media_dias
+        FROM itens i
+        JOIN historico_status h ON i.id = h.item_id
+        WHERE h.status = 'devolvido'
+    """).fetchone()
+    conn.close()
+
+    return row["media_dias"] if row and row["media_dias"] is not None else 0

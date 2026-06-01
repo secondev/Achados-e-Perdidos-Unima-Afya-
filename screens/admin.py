@@ -14,7 +14,7 @@ import database as db
 
 
 class AdminPanel(ctk.CTkFrame):
-    def __init__(self, parent, usuario, on_navigate, on_logout):
+    def __init__(self, parent, usuario, on_navigate, on_logout, **kwargs):
         super().__init__(parent, fg_color=COLORS["ink_25"], corner_radius=0)
         self.usuario = usuario
         self.on_navigate = on_navigate
@@ -86,6 +86,21 @@ class AdminPanel(ctk.CTkFrame):
             btn = self._criar_filter_btn(filter_frame, texto, valor, ativo=(valor == "aberto"))
             btn.pack(side="left", padx=2)
             self.status_buttons[valor] = btn
+
+        # ============================================
+        # BOTÃO PARA O NOVO DASHBOARD
+        # ============================================
+        btn_stats = ctk.CTkButton(
+            toolbar,
+            text="📊 Dashboard",
+            font=("Segoe UI", 12, "bold"),
+            fg_color=COLORS["magenta"],
+            text_color=COLORS["white"],
+            hover_color=COLORS["magenta_dark"],
+            height=36,
+            command=lambda: self.on_navigate("dashboard")
+        )
+        btn_stats.pack(side="right", padx=(12, 0))
 
         # Container da lista
         self.list_container = ctk.CTkFrame(wrapper, fg_color="transparent")
