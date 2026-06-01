@@ -147,6 +147,7 @@ class HomeAluno(ctk.CTkFrame):
 
         itens = db.listar_itens_usuario(self.usuario["id"])
         ativas = [i for i in itens if i["status"] in ("aberto", "analise", "encontrado")]
+        devolvidos = [i for i in itens if i["status"] == "devolvido"]
 
         ctk.CTkLabel(
             header,
@@ -187,6 +188,31 @@ class HomeAluno(ctk.CTkFrame):
             ).pack(expand=True)
         else:
             for item in ativas:
+                card = ItemCard(
+                    parent,
+                    item,
+                    on_click=lambda i: self.on_navigate("detalhe", i)
+                )
+                card.pack(fill="x", pady=4)
+
+        if devolvidos:
+            ctk.CTkLabel(
+                parent,
+                text="Itens devolvidos",
+                font=("Segoe UI", 14, "bold"),
+                text_color=COLORS["ink_700"],
+            ).pack(anchor="w", pady=(24, 8))
+
+            ctk.CTkLabel(
+                parent,
+                text="Clique em um caso devolvido para avaliar o atendimento.",
+                font=("Segoe UI", 11),
+                text_color=COLORS["ink_500"],
+                wraplength=720,
+                justify="left"
+            ).pack(anchor="w", pady=(0, 12))
+
+            for item in devolvidos:
                 card = ItemCard(
                     parent,
                     item,

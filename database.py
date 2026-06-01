@@ -82,6 +82,18 @@ def init_db():
         )
     """)
 
+    # Tabela de avaliações de atendimento
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS avaliacoes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            item_id INTEGER NOT NULL UNIQUE,
+            nota INTEGER NOT NULL CHECK(nota BETWEEN 1 AND 5),
+            comentario TEXT,
+            criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (item_id) REFERENCES itens(id)
+        )
+    """)
+
     conn.commit()
 
     if novo_banco:
@@ -275,6 +287,36 @@ def buscar_item(item_id):
     """, (item_id,)).fetchone()
     conn.close()
     return dict(row) if row else None
+
+
+def buscar_avaliacao(item_id):
+    """Retorna a avaliação do atendimento para um item, se existir."""
+    conn = get_conn()
+    row = conn.execute(
+        "SELECT * FROM avaliacoes WHERE item_id = ?",
+        (item_id,)
+    ).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def salvar_avaliacao(item_id, nota, comentario):
+    """Salva ou atualiza a avaliação de um item."""
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute(
+        """
+        INSERT INTO avaliacoes (item_id, nota, comentario)
+        VALUES (?, ?, ?)
+        ON CONFLICT(item_id) DO UPDATE SET
+            nota = excluded.nota,
+            comentario = excluded.comentario,
+            criado_em = CURRENT_TIMESTAMP
+        """,
+        (item_id, nota, comentario)
+    )
+    conn.commit()
+    conn.close()
 
 
 def cadastrar_item(tipo, usuario_id, nome, categoria, local, descricao, foto_url, data_ocorrido=None):

@@ -21,6 +21,7 @@ class DetalheItem(ctk.CTkFrame):
         self.item = item
         self.on_navigate = on_navigate
         self.on_logout = on_logout
+        self.avaliacao = db.buscar_avaliacao(self.item["id"])
 
         # Determina nav_atual baseado em quem está logado
         nav = "admin" if usuario["tipo"] == "funcionario" else "inicio"
@@ -211,6 +212,9 @@ class DetalheItem(ctk.CTkFrame):
                 anchor="w"
             ).pack(anchor="w")
 
+        if self.item.get("status") == "devolvido":
+            self._criar_secao_avaliacao(det)
+
         # Botões de ação (só para funcionário)
         if self.usuario["tipo"] == "funcionario":
             self._criar_acoes_funcionario(det)
@@ -261,6 +265,158 @@ class DetalheItem(ctk.CTkFrame):
             # Recarrega a tela
             self.item = db.buscar_item(self.item["id"])
             self.on_navigate("detalhe", self.item)
+
+    def _criar_secao_avaliacao(self, parent):
+        sep = ctk.CTkFrame(parent, fg_color=COLORS["ink_100"], height=1)
+        sep.pack(fill="x", pady=(20, 16))
+
+        ctk.CTkLabel(
+            parent,
+            text="AVALIAÇÃO DO ATENDIMENTO",
+            font=("Segoe UI", 10, "bold"),
+            text_color=COLORS["ink_400"]
+        ).pack(anchor="w", pady=(0, 12))
+
+        if self.avaliacao:
+            nota_frame = ctk.CTkFrame(parent, fg_color="transparent")
+            nota_frame.pack(fill="x", pady=(0, 8))
+
+            ctk.CTkLabel(
+                nota_frame,
+                text=f"Nota: {self.avaliacao['nota']} de 5",
+                font=("Segoe UI", 12, "bold"),
+                text_color=COLORS["ink_900"]
+            ).pack(anchor="w")
+
+            ctk.CTkLabel(
+                parent,
+                text=self.avaliacao.get("comentario", "Sem comentário."),
+                font=("Segoe UI", 11),
+                text_color=COLORS["ink_700"],
+                wraplength=400,
+                justify="left"
+            ).pack(fill="x")
+        elif self.usuario["tipo"] == "aluno":
+            ctk.CTkLabel(
+                parent,
+                text="Seu item foi devolvido! Conte como foi o atendimento para ajudar o setor.",
+                font=("Segoe UI", 11),
+                text_color=COLORS["ink_600"],
+                wraplength=400,
+                justify="left"
+            ).pack(fill="x", pady=(0, 12))
+
+            ctk.CTkButton(
+                parent,
+                text="Avaliar atendimento",
+                font=("Segoe UI", 11, "bold"),
+                fg_color=COLORS["magenta"],
+                text_color=COLORS["white"],
+                corner_radius=10,
+                height=36,
+                width=180,
+                command=self._abrir_modal_avaliacao
+            ).pack(anchor="w")
+        else:
+            ctk.CTkLabel(
+                parent,
+                text="Aguardando avaliação do aluno.",
+                font=("Segoe UI", 11),
+                text_color=COLORS["ink_600"],
+                wraplength=400,
+                justify="left"
+            ).pack(fill="x")
+
+    def _abrir_modal_avaliacao(self):
+        modal = ctk.CTkToplevel(self)
+        modal.title("Avaliar atendimento")
+        modal.geometry("440x380")
+        modal.grab_set()
+        modal.transient(self)
+
+        ctk.CTkLabel(
+            modal,
+            text="Avaliação de 1 a 5 estrelas",
+            font=("Segoe UI", 14, "bold"),
+            text_color=COLORS["ink_900"]
+        ).pack(anchor="w", padx=20, pady=(20, 10))
+
+        nota_var = ctk.IntVar(value=5)
+        stars_frame = ctk.CTkFrame(modal, fg_color="transparent")
+        stars_frame.pack(anchor="w", padx=20, pady=(0, 16))
+
+        star_buttons = []
+
+        def atualizar_estrelas():
+            for index, btn in enumerate(star_buttons, start=1):
+                btn.configure(text="★" if index <= nota_var.get() else "☆")
+
+        def set_nota(valor):
+            nota_var.set(valor)
+            atualizar_estrelas()
+
+        for i in range(1, 6):
+            btn = ctk.CTkButton(
+                stars_frame,
+                text="★" if i <= nota_var.get() else "☆",
+                font=("Segoe UI", 18),
+                fg_color=COLORS["magenta"],
+                text_color=COLORS["white"],
+                width=38,
+                height=38,
+                corner_radius=12,
+                command=lambda v=i: set_nota(v)
+            )
+            btn.pack(side="left", padx=4)
+            star_buttons.append(btn)
+
+        ctk.CTkLabel(
+            modal,
+            text="Comentário (opcional)",
+            font=("Segoe UI", 11, "bold"),
+            text_color=COLORS["ink_700"]
+        ).pack(anchor="w", padx=20, pady=(0, 8))
+
+        comentario_box = ctk.CTkTextbox(modal, width=400, height=140)
+        comentario_box.pack(padx=20, pady=(0, 14))
+
+        btn_frame = ctk.CTkFrame(modal, fg_color="transparent")
+        btn_frame.pack(fill="x", padx=20)
+
+        ctk.CTkButton(
+            btn_frame,
+            text="Cancelar",
+            font=("Segoe UI", 11),
+            fg_color=COLORS["white"],
+            text_color=COLORS["ink_700"],
+            border_width=1,
+            border_color=COLORS["ink_200"],
+            corner_radius=10,
+            command=modal.destroy
+        ).pack(side="left", expand=True, padx=(0, 8), pady=(0, 10))
+
+        def enviar_avaliacao():
+            comentario = comentario_box.get("1.0", "end").strip()
+            nota = nota_var.get()
+            if nota < 1 or nota > 5:
+                messagebox.showerror("Erro", "Escolha uma nota entre 1 e 5.")
+                return
+
+            db.salvar_avaliacao(self.item["id"], nota, comentario)
+            messagebox.showinfo("Obrigado", "Avaliação registrada com sucesso.")
+            modal.destroy()
+            self.item = db.buscar_item(self.item["id"])
+            self.on_navigate("detalhe", self.item)
+
+        ctk.CTkButton(
+            btn_frame,
+            text="Enviar avaliação",
+            font=("Segoe UI", 11, "bold"),
+            fg_color=COLORS["magenta"],
+            text_color=COLORS["white"],
+            corner_radius=10,
+            command=enviar_avaliacao
+        ).pack(side="right", expand=True, padx=(8, 0), pady=(0, 10))
 
     def _criar_card_chat(self, parent):
         card = ctk.CTkFrame(
