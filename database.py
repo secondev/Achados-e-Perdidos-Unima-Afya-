@@ -82,6 +82,20 @@ def init_db():
         )
     """)
 
+    # Tabela de notificações do aluno (sininho)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS notificacoes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            usuario_id INTEGER NOT NULL,
+            item_id INTEGER NOT NULL,
+            tipo TEXT NOT NULL CHECK(tipo IN ('mensagem', 'status')),
+            lida INTEGER NOT NULL DEFAULT 0,
+            criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+            FOREIGN KEY (item_id) REFERENCES itens(id)
+        )
+    """)
+
     # Tabela de avaliações de atendimento
     c.execute("""
         CREATE TABLE IF NOT EXISTS avaliacoes (
@@ -335,7 +349,7 @@ def cadastrar_item(tipo, usuario_id, nome, categoria, local, descricao, foto_url
 
 
 def atualizar_status(item_id, novo_status):
-    """Atualiza o status de um item e registra no histórico."""
+    """Atualiza o status de um item, registra no histórico e notifica o aluno dono."""
     conn = get_conn()
     c = conn.cursor()
     c.execute(
@@ -346,6 +360,13 @@ def atualizar_status(item_id, novo_status):
         "INSERT INTO historico_status (item_id, status) VALUES (?, ?)",
         (item_id, novo_status)
     )
+    # Notifica o aluno dono do item sobre a mudança de status
+    item = conn.execute("SELECT usuario_id FROM itens WHERE id = ?", (item_id,)).fetchone()
+    if item:
+        c.execute("""
+            INSERT INTO notificacoes (usuario_id, item_id, tipo)
+            VALUES (?, ?, 'status')
+        """, (item["usuario_id"], item_id))
     conn.commit()
     conn.close()
 
@@ -395,13 +416,23 @@ def listar_mensagens(item_id):
 
 
 def enviar_mensagem(item_id, remetente_id, texto, foto_url=None):
-    """Envia uma nova mensagem no chat."""
+    """Envia uma nova mensagem no chat e cria notificação para o aluno dono do item."""
     conn = get_conn()
     c = conn.cursor()
     c.execute("""
         INSERT INTO mensagens (item_id, remetente_id, texto, foto_url)
         VALUES (?, ?, ?, ?)
     """, (item_id, remetente_id, texto, foto_url))
+
+    # Cria notificação para o aluno dono do item (só se quem enviou for funcionário)
+    item = conn.execute("SELECT usuario_id FROM itens WHERE id = ?", (item_id,)).fetchone()
+    remetente = conn.execute("SELECT tipo FROM usuarios WHERE id = ?", (remetente_id,)).fetchone()
+    if item and remetente and remetente["tipo"] == "funcionario":
+        c.execute("""
+            INSERT INTO notificacoes (usuario_id, item_id, tipo)
+            VALUES (?, ?, 'mensagem')
+        """, (item["usuario_id"], item_id))
+
     conn.commit()
     conn.close()
 
@@ -486,3 +517,43 @@ def get_tempo_medio_resolucao():
     conn.close()
 
     return row["media_dias"] if row and row["media_dias"] is not None else 0
+
+
+# ============================================
+# FUNÇÕES DE NOTIFICAÇÕES
+# ============================================
+
+def contar_notificacoes(usuario_id):
+    """Conta quantas notificações não lidas o aluno tem."""
+    conn = get_conn()
+    row = conn.execute("""
+        SELECT COUNT(*) as total FROM notificacoes
+        WHERE usuario_id = ? AND lida = 0
+    """, (usuario_id,)).fetchone()
+    conn.close()
+    return row["total"] if row else 0
+
+
+def marcar_notificacoes_lidas(usuario_id, item_id):
+    """Marca como lidas todas as notificações do aluno para um item específico."""
+    conn = get_conn()
+    conn.execute("""
+        UPDATE notificacoes SET lida = 1
+        WHERE usuario_id = ? AND item_id = ? AND lida = 0
+    """, (usuario_id, item_id))
+    conn.commit()
+    conn.close()
+
+
+def listar_notificacoes(usuario_id):
+    """Retorna notificações não lidas do aluno com o nome do item."""
+    conn = get_conn()
+    rows = conn.execute("""
+        SELECT n.id, n.item_id, n.tipo, n.criado_em, i.nome as item_nome
+        FROM notificacoes n
+        JOIN itens i ON n.item_id = i.id
+        WHERE n.usuario_id = ? AND n.lida = 0
+        ORDER BY n.criado_em DESC
+    """, (usuario_id,)).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
