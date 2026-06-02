@@ -1,4 +1,3 @@
-
 """
 components/widgets.py — Componentes visuais reutilizáveis
 
@@ -12,6 +11,7 @@ Centraliza widgets que aparecem em várias telas:
 
 import customtkinter as ctk
 from config import COLORS, FONTS, STATUS
+import database as db
 
 
 # ============================================
@@ -100,6 +100,38 @@ class AppBar(ctk.CTkFrame):
             )
             btn.pack(side="left", padx=2)
 
+        # === Sininho de notificações (só para aluno) ===
+        if usuario["tipo"] == "aluno" and on_nav:
+            total_notif = db.contar_notificacoes(usuario["id"])
+
+            sino_frame = ctk.CTkFrame(inner, fg_color="transparent")
+            sino_frame.pack(side="right", padx=(0, 12))
+
+            sino_btn = ctk.CTkButton(
+                sino_frame,
+                text="🔔",
+                font=("Segoe UI", 16),
+                fg_color=COLORS["ink_50"],
+                text_color=COLORS["ink_700"],
+                hover_color=COLORS["ink_100"],
+                width=36, height=36,
+                corner_radius=18,
+                command=lambda: self._abrir_popup_notificacoes(sino_btn, usuario, on_nav)
+            )
+            sino_btn.pack()
+
+            if total_notif > 0:
+                badge = ctk.CTkLabel(
+                    sino_frame,
+                    text=str(total_notif) if total_notif <= 9 else "9+",
+                    font=("Segoe UI", 9, "bold"),
+                    fg_color=COLORS["magenta"],
+                    text_color=COLORS["white"],
+                    corner_radius=8,
+                    width=16, height=16
+                )
+                badge.place(in_=sino_btn, relx=0.65, rely=0.0, anchor="n")
+
         # === Usuário (direita) ===
         user_frame = ctk.CTkFrame(
             inner,
@@ -144,6 +176,121 @@ class AppBar(ctk.CTkFrame):
         # Linha divisória inferior
         divider = ctk.CTkFrame(self, fg_color=COLORS["ink_100"], height=1)
         divider.pack(side="bottom", fill="x")
+
+    def _abrir_popup_notificacoes(self, ancora, usuario, on_nav):
+        """Abre um popup dropdown com as notificações não lidas do aluno."""
+        notificacoes = db.listar_notificacoes(usuario["id"])
+
+        # Posição absoluta do sininho na tela
+        ancora.update_idletasks()
+        x = ancora.winfo_rootx()
+        y = ancora.winfo_rooty() + ancora.winfo_height() + 4
+
+        popup = ctk.CTkToplevel()
+        popup.overrideredirect(True)          # sem barra de título
+        popup.attributes("-topmost", True)
+        popup.geometry(f"280x{min(60 + len(notificacoes) * 72, 360)}+{x - 220}+{y}")
+        popup.configure(fg_color=COLORS["white"])
+
+        # Fecha o popup ao clicar fora
+        popup.bind("<FocusOut>", lambda e: popup.destroy())
+        popup.focus_set()
+
+        # Cabeçalho
+        header = ctk.CTkFrame(popup, fg_color="transparent")
+        header.pack(fill="x", padx=14, pady=(12, 6))
+
+        ctk.CTkLabel(
+            header,
+            text="Notificações",
+            font=("Segoe UI", 13, "bold"),
+            text_color=COLORS["ink_900"]
+        ).pack(side="left")
+
+        if notificacoes:
+            ctk.CTkLabel(
+                header,
+                text=f"  {len(notificacoes)}  ",
+                font=("Segoe UI", 10, "bold"),
+                fg_color=COLORS["magenta"],
+                text_color=COLORS["white"],
+                corner_radius=10,
+                height=20
+            ).pack(side="left", padx=(6, 0))
+
+        # Divisória
+        ctk.CTkFrame(popup, fg_color=COLORS["ink_100"], height=1).pack(fill="x")
+
+        if not notificacoes:
+            ctk.CTkLabel(
+                popup,
+                text="🎉  Nenhuma notificação nova.",
+                font=("Segoe UI", 11),
+                text_color=COLORS["ink_400"]
+            ).pack(pady=16)
+            return
+
+        # Lista de notificações
+        lista = ctk.CTkScrollableFrame(popup, fg_color="transparent", height=260)
+        lista.pack(fill="both", expand=True)
+
+        for notif in notificacoes:
+            icone = "💬" if notif["tipo"] == "mensagem" else "🔄"
+            texto = (
+                "Nova mensagem do setor"
+                if notif["tipo"] == "mensagem"
+                else "Status atualizado"
+            )
+            item_nome = notif["item_nome"][:28] + ("…" if len(notif["item_nome"]) > 28 else "")
+
+            row = ctk.CTkFrame(
+                lista,
+                fg_color=COLORS["magenta_50"],
+                corner_radius=10,
+                cursor="hand2"
+            )
+            row.pack(fill="x", padx=10, pady=4)
+
+            inner_row = ctk.CTkFrame(row, fg_color="transparent")
+            inner_row.pack(fill="x", padx=12, pady=8)
+
+            ctk.CTkLabel(
+                inner_row,
+                text=icone,
+                font=("Segoe UI", 18),
+                width=28
+            ).pack(side="left")
+
+            info = ctk.CTkFrame(inner_row, fg_color="transparent")
+            info.pack(side="left", padx=(8, 0), fill="x", expand=True)
+
+            ctk.CTkLabel(
+                info,
+                text=texto,
+                font=("Segoe UI", 11, "bold"),
+                text_color=COLORS["ink_900"],
+                anchor="w"
+            ).pack(anchor="w")
+
+            ctk.CTkLabel(
+                info,
+                text=item_nome,
+                font=("Segoe UI", 10),
+                text_color=COLORS["ink_400"],
+                anchor="w"
+            ).pack(anchor="w")
+
+            def _abrir(item_id=notif["item_id"]):
+                popup.destroy()
+                db.marcar_notificacoes_lidas(usuario["id"], item_id)
+                item = db.buscar_item(item_id)
+                if item:
+                    on_nav("detalhe", item)
+
+            for w in [row, inner_row, info]:
+                w.bind("<Button-1>", lambda e, fn=_abrir: fn())
+
+
 
 
 # ============================================
