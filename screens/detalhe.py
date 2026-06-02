@@ -23,6 +23,10 @@ class DetalheItem(ctk.CTkFrame):
         self.on_logout = on_logout
         self.avaliacao = db.buscar_avaliacao(self.item["id"])
 
+        # Marca notificações deste item como lidas (se for o aluno abrindo)
+        if usuario["tipo"] == "aluno":
+            db.marcar_notificacoes_lidas(usuario["id"], self.item["id"])
+
         # Determina nav_atual baseado em quem está logado
         nav = "admin" if usuario["tipo"] == "funcionario" else "inicio"
 
