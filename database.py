@@ -9,6 +9,12 @@ import sqlite3
 import os
 from datetime import datetime
 
+from api.email_service import (
+    notificar_mudanca_status,
+    notificar_nova_mensagem,
+    notificar_nova_perda,
+)
+
 DB_FILE = "achados_unima.db"
 
 
@@ -345,6 +351,36 @@ def cadastrar_item(tipo, usuario_id, nome, categoria, local, descricao, foto_url
     c.execute("INSERT INTO historico_status (item_id, status) VALUES (?, 'aberto')", (item_id,))
     conn.commit()
     conn.close()
+
+    # Notifica funcionários por email (somente quando uma PERDA é cadastrada)
+    if tipo == "perda":
+        try:
+            conn2 = get_conn()
+            funcionarios = conn2.execute(
+                "SELECT * FROM usuarios WHERE tipo = 'funcionario'"
+            ).fetchall()
+            aluno = conn2.execute(
+                "SELECT * FROM usuarios WHERE id = ?", (usuario_id,)
+            ).fetchone()
+            conn2.close()
+
+            item_dict = {
+                "nome": nome,
+                "local": local,
+                "data_ocorrido": data_ocorrido,
+                "categoria": categoria,
+            }
+
+            for funcionario in funcionarios:
+                notificar_nova_perda(
+                    funcionario_email=funcionario["email"],
+                    funcionario_nome=funcionario["nome"],
+                    aluno_nome=aluno["nome"],
+                    item=item_dict,
+                )
+        except Exception as e:
+            print(f"[EMAIL] Falha ao notificar funcionários: {e}")
+
     return item_id
 
 
@@ -369,6 +405,19 @@ def atualizar_status(item_id, novo_status):
         """, (item["usuario_id"], item_id))
     conn.commit()
     conn.close()
+
+    # Notifica o aluno por email sobre a mudança de status
+    try:
+        item = buscar_item(item_id)
+        if item and item.get("aluno_email"):
+            notificar_mudanca_status(
+                aluno_email=item["aluno_email"],
+                aluno_nome=item["aluno_nome"],
+                item=item,
+                novo_status=novo_status,
+            )
+    except Exception as e:
+        print(f"[EMAIL] Falha ao notificar mudança de status: {e}")
 
 
 def contar_status(usuario_id):
@@ -435,6 +484,50 @@ def enviar_mensagem(item_id, remetente_id, texto, foto_url=None):
 
     conn.commit()
     conn.close()
+
+    # Notifica o outro lado da conversa por email
+    try:
+        conn3 = get_conn()
+        item = conn3.execute(
+            """SELECT i.*, u.nome as aluno_nome, u.email as aluno_email
+               FROM itens i JOIN usuarios u ON i.usuario_id = u.id
+               WHERE i.id = ?""",
+            (item_id,)
+        ).fetchone()
+        remetente = conn3.execute(
+            "SELECT * FROM usuarios WHERE id = ?", (remetente_id,)
+        ).fetchone()
+        conn3.close()
+
+        if item and remetente:
+            item_dict = dict(item)
+
+            # Se quem enviou foi o aluno → notifica os funcionários
+            # Se quem enviou foi o funcionário → notifica o aluno
+            if remetente["tipo"] == "aluno":
+                conn4 = get_conn()
+                funcionarios = conn4.execute(
+                    "SELECT * FROM usuarios WHERE tipo = 'funcionario'"
+                ).fetchall()
+                conn4.close()
+                for func in funcionarios:
+                    notificar_nova_mensagem(
+                        destinatario_email=func["email"],
+                        destinatario_nome=func["nome"],
+                        remetente_nome=remetente["nome"],
+                        item=item_dict,
+                        texto_mensagem=texto or "(imagem)",
+                    )
+            else:
+                notificar_nova_mensagem(
+                    destinatario_email=item["aluno_email"],
+                    destinatario_nome=item["aluno_nome"],
+                    remetente_nome=remetente["nome"],
+                    item=item_dict,
+                    texto_mensagem=texto or "(imagem)",
+                )
+    except Exception as e:
+        print(f"[EMAIL] Falha ao notificar nova mensagem: {e}")
 
 
 def listar_historico_status(item_id):

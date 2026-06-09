@@ -33,3 +33,9 @@ desktop.ini
 
 # Logs
 *.log
+
+# Banco de dados local
+achados_unima.db
+
+# Credenciais
+resend_key_backup.txt

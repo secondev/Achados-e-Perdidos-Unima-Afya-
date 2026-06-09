@@ -1,14 +1,14 @@
-"""
-config.py — Configurações globais do Achados Unima Afya
+﻿"""
+config.py â€” ConfiguraÃ§Ãµes globais do Achados Unima Afya
 
 Define cores da identidade visual da Afya (magenta), fontes,
 tamanhos, paletas claro/escuro e a chave da API ImgBB.
 """
 
 # ============================================
-# IDENTIDADE VISUAL — CORES OFICIAIS DA AFYA
+# IDENTIDADE VISUAL â€” CORES OFICIAIS DA AFYA
 # ============================================
-# Magenta é fixo nas duas paletas (cor da marca)
+# Magenta Ã© fixo nas duas paletas (cor da marca)
 MAGENTA = "#E6007E"
 MAGENTA_DARK = "#B30062"
 MAGENTA_LIGHT = "#FF4DA6"
@@ -64,15 +64,15 @@ DARK_THEME = {
     "magenta": MAGENTA,
     "magenta_dark": MAGENTA_DARK,
     "magenta_light": MAGENTA_LIGHT,
-    "magenta_50": "#2D0A1E",      # versão escura do magenta_50
-    "magenta_100": "#4A1132",     # versão escura do magenta_100
+    "magenta_50": "#2D0A1E",      # versÃ£o escura do magenta_50
+    "magenta_100": "#4A1132",     # versÃ£o escura do magenta_100
 
     # Tons invertidos (fundo escuro)
     "ink_900": "#FAFAFA",         # texto principal vira branco
-    "ink_700": "#E4E4E7",         # texto secundário claro
-    "ink_500": "#A1A1AA",         # texto terciário cinza claro
+    "ink_700": "#E4E4E7",         # texto secundÃ¡rio claro
+    "ink_500": "#A1A1AA",         # texto terciÃ¡rio cinza claro
     "ink_400": "#71717A",         # texto fraco
-    "ink_300": "#52525B",         # bordas mais visíveis
+    "ink_300": "#52525B",         # bordas mais visÃ­veis
     "ink_200": "#3F3F46",         # bordas
     "ink_100": "#27272A",         # bordas sutis e fundo de cards
     "ink_50": "#1F1F23",          # fundo de elementos
@@ -100,12 +100,12 @@ DARK_THEME = {
 # ============================================
 # GERENCIADOR DE TEMA
 # ============================================
-# Tema atual (começa em light por padrão)
+# Tema atual (comeÃ§a em light por padrÃ£o)
 _tema_atual = "light"
 
 # COLORS aponta dinamicamente pra paleta atual
-# IMPORTANTE: as telas leem COLORS["chave"], então quando alteramos
-# o tema, todas as referências futuras pegam as novas cores
+# IMPORTANTE: as telas leem COLORS["chave"], entÃ£o quando alteramos
+# o tema, todas as referÃªncias futuras pegam as novas cores
 COLORS = dict(LIGHT_THEME)
 
 
@@ -117,7 +117,7 @@ def get_tema():
 def alternar_tema():
     """
     Alterna entre tema claro e escuro.
-    Atualiza o dicionário COLORS in-place pra que as referências
+    Atualiza o dicionÃ¡rio COLORS in-place pra que as referÃªncias
     existentes nas telas peguem as novas cores ao re-renderizar.
     """
     global _tema_atual
@@ -129,7 +129,7 @@ def alternar_tema():
         _tema_atual = "light"
         nova_paleta = LIGHT_THEME
 
-    # Atualiza COLORS in-place (mantém a referência)
+    # Atualiza COLORS in-place (mantÃ©m a referÃªncia)
     COLORS.clear()
     COLORS.update(nova_paleta)
 
@@ -139,7 +139,7 @@ def alternar_tema():
 def aplicar_tema(tema):
     """
     Define o tema explicitamente ('light' ou 'dark').
-    Útil pra carregar preferência salva.
+    Ãštil pra carregar preferÃªncia salva.
     """
     global _tema_atual
 
@@ -175,39 +175,39 @@ FONTS = {
 # CATEGORIAS DE ITENS
 # ============================================
 CATEGORIAS = [
-    {"id": 1, "nome": "Material escolar", "icone": "📚"},
-    {"id": 2, "nome": "Eletrônicos", "icone": "🎧"},
-    {"id": 3, "nome": "Roupas", "icone": "👕"},
-    {"id": 4, "nome": "Documentos", "icone": "💳"},
-    {"id": 5, "nome": "Acessórios", "icone": "🔑"},
-    {"id": 6, "nome": "Garrafas/Recipientes", "icone": "💧"},
-    {"id": 7, "nome": "Outros", "icone": "📦"},
+    {"id": 1, "nome": "Material escolar", "icone": "ðŸ“š"},
+    {"id": 2, "nome": "EletrÃ´nicos", "icone": "ðŸŽ§"},
+    {"id": 3, "nome": "Roupas", "icone": "ðŸ‘•"},
+    {"id": 4, "nome": "Documentos", "icone": "ðŸ’³"},
+    {"id": 5, "nome": "AcessÃ³rios", "icone": "ðŸ”‘"},
+    {"id": 6, "nome": "Garrafas/Recipientes", "icone": "ðŸ’§"},
+    {"id": 7, "nome": "Outros", "icone": "ðŸ“¦"},
 ]
 
 # ============================================
 # LOCAIS DO CAMPUS
 # ============================================
 LOCAIS = [
-    "Bloco A — Salas 101 a 120",
-    "Bloco B — Laboratórios",
-    "Bloco C — Salas 201 a 220",
+    "Bloco A â€” Salas 101 a 120",
+    "Bloco B â€” LaboratÃ³rios",
+    "Bloco C â€” Salas 201 a 220",
     "Cantina principal",
     "Biblioteca",
-    "Auditório",
+    "AuditÃ³rio",
     "Estacionamento",
-    "Pátio central",
-    "Não tenho certeza",
+    "PÃ¡tio central",
+    "NÃ£o tenho certeza",
 ]
 
 # ============================================
-# STATUS POSSÍVEIS
+# STATUS POSSÃVEIS
 # ============================================
 STATUS = {
     "aberto": "Aberto",
-    "analise": "Em análise",
+    "analise": "Em anÃ¡lise",
     "encontrado": "Encontrado",
     "devolvido": "Devolvido",
-    "naoachado": "Não encontrado",
+    "naoachado": "NÃ£o encontrado",
 }
 
 # ============================================
@@ -216,10 +216,32 @@ STATUS = {
 IMGBB_API_KEY = ""
 
 # ============================================
-# CONFIGURAÇÕES DA JANELA
+# CONFIGURAÃ‡Ã•ES DA JANELA
 # ============================================
 APP_TITLE = "Achados Unima Afya"
 APP_WIDTH = 1200
 APP_HEIGHT = 760
 APP_MIN_WIDTH = 1000
 APP_MIN_HEIGHT = 650
+
+# ============================================
+# API RESEND (notificaÃ§Ãµes por email)
+# ============================================
+# Para envio real de emails, crie conta gratuita em https://resend.com
+# Gere uma API key em: https://resend.com/api-keys
+# Cole a key abaixo. Sem ela, o sistema funciona em modo SIMULAÃ‡ÃƒO
+# (apenas registra no terminal o email que seria enviado)
+RESEND_API_KEY = ""
+
+# Email remetente (deve ser de domÃ­nio verificado na Resend)
+# Por padrÃ£o, a Resend permite usar "onboarding@resend.dev" para testes
+RESEND_FROM_EMAIL = "Achados Unima <onboarding@resend.dev>"
+
+# MODO DEMO: se True, todos os emails (independente do destinatÃ¡rio real)
+# sÃ£o enviados para EMAIL_DESTINATARIO_DEMO. Ãštil para apresentaÃ§Ã£o:
+# o professor recebe todos os emails na prÃ³pria caixa dele para visualizar.
+EMAIL_MODO_DEMO = True
+EMAIL_DESTINATARIO_DEMO = "alanmaiacomercial@gmail.com"  # ALTERE PARA SEU EMAIL
+
+# Master switch: desligar emails para apresentaÃ§Ãµes sem internet
+EMAIL_ENABLED = True
