@@ -16,6 +16,7 @@ from screens.login import LoginScreen
 from screens.home_aluno import HomeAluno
 from screens.cadastro import CadastroPerda
 from screens.disponiveis import ItensDisponiveis
+from screens.descarte import ItensExpirados
 from screens.admin import AdminPanel
 from screens.detalhe import DetalheItem
 from screens.dashboard import DashboardFuncionario
@@ -48,8 +49,10 @@ class App(ctk.CTk):
         # Estado
         self.usuario_atual = None
         self.tela_atual = None
-        self.tela_atual_nome = None      # Nome da tela atual (pra re-renderizar)
-        self.tela_atual_dados = None     # Dados da tela atual (pra re-renderizar)
+        # Nome da tela atual (pra re-renderizar)
+        self.tela_atual_nome = None
+        # Dados da tela atual (pra re-renderizar)
+        self.tela_atual_dados = None
 
         self.container = ctk.CTkFrame(
             self, fg_color=COLORS["ink_25"], corner_radius=0
@@ -70,7 +73,8 @@ class App(ctk.CTk):
         self.tela_atual_nome = "login"
         self.tela_atual_dados = None
         # LoginScreen não tem theme toggle (tela pré-login)
-        self.tela_atual = LoginScreen(self.container, on_login=self._fazer_login)
+        self.tela_atual = LoginScreen(
+            self.container, on_login=self._fazer_login)
         self.tela_atual.pack(fill="both", expand=True)
 
     def _fazer_login(self, usuario):
@@ -131,6 +135,10 @@ class App(ctk.CTk):
             )
         elif destino == "dashboard":
             self.tela_atual = DashboardFuncionario(
+                self.container, self.usuario_atual, **kwargs_comum
+            )
+        elif destino == "descarte":  # <-- ADICIONE ESTE BLOCO
+            self.tela_atual = ItensExpirados(
                 self.container, self.usuario_atual, **kwargs_comum
             )
         elif destino == "detalhe":

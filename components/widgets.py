@@ -7,6 +7,7 @@ Centraliza widgets que aparecem em várias telas:
 - ItemCard (card de item perdido/achado)
 - StatCard (card de métrica)
 - IconLabel (ícone + texto)
+- GalleryCard (card vertical para a galeria de itens)
 """
 
 import customtkinter as ctk
@@ -60,7 +61,8 @@ class AppBar(ctk.CTkFrame):
             text_color=COLORS["ink_900"]
         ).pack(anchor="w")
 
-        sub = subtitle if subtitle else ("Painel Administrativo" if usuario["tipo"] == "funcionario" else "Afya Maceió")
+        sub = subtitle if subtitle else (
+            "Painel Administrativo" if usuario["tipo"] == "funcionario" else "Afya Maceió")
         ctk.CTkLabel(
             text_frame,
             text=sub,
@@ -79,6 +81,7 @@ class AppBar(ctk.CTkFrame):
             nav_items = [
                 ("admin", "Mural"),
                 ("disponiveis", "Itens recebidos"),
+                ("descarte", "Itens Expirados"),
             ]
 
         nav_frame = ctk.CTkFrame(inner, fg_color="transparent")
@@ -86,6 +89,12 @@ class AppBar(ctk.CTkFrame):
 
         for key, label in nav_items:
             is_active = key == nav_atual
+
+            if "achados" in label.lower() or "recebidos" in label.lower() or "expirados" in label.lower():
+                btn_width = 110
+            else:
+                btn_width = 90
+
             btn = ctk.CTkButton(
                 nav_frame,
                 text=label,
@@ -95,7 +104,7 @@ class AppBar(ctk.CTkFrame):
                 hover_color=COLORS["magenta_100"] if is_active else COLORS["magenta_50"],
                 corner_radius=8,
                 height=32,
-                width=110 if "achados" in label.lower() or "recebidos" in label.lower() else 90,
+                width=btn_width,
                 command=lambda k=key: on_nav(k) if on_nav else None
             )
             btn.pack(side="left", padx=2)
@@ -116,7 +125,8 @@ class AppBar(ctk.CTkFrame):
                 hover_color=COLORS["ink_100"],
                 width=36, height=36,
                 corner_radius=18,
-                command=lambda: self._abrir_popup_notificacoes(sino_btn, usuario, on_nav)
+                command=lambda: self._abrir_popup_notificacoes(
+                    sino_btn, usuario, on_nav)
             )
             sino_btn.pack()
 
@@ -181,22 +191,20 @@ class AppBar(ctk.CTkFrame):
         """Abre um popup dropdown com as notificações não lidas do aluno."""
         notificacoes = db.listar_notificacoes(usuario["id"])
 
-        # Posição absoluta do sininho na tela
         ancora.update_idletasks()
         x = ancora.winfo_rootx()
         y = ancora.winfo_rooty() + ancora.winfo_height() + 4
 
         popup = ctk.CTkToplevel()
-        popup.overrideredirect(True)          # sem barra de título
+        popup.overrideredirect(True)
         popup.attributes("-topmost", True)
-        popup.geometry(f"280x{min(60 + len(notificacoes) * 72, 360)}+{x - 220}+{y}")
+        popup.geometry(
+            f"280x{min(60 + len(notificacoes) * 72, 360)}+{x - 220}+{y}")
         popup.configure(fg_color=COLORS["white"])
 
-        # Fecha o popup ao clicar fora
         popup.bind("<FocusOut>", lambda e: popup.destroy())
         popup.focus_set()
 
-        # Cabeçalho
         header = ctk.CTkFrame(popup, fg_color="transparent")
         header.pack(fill="x", padx=14, pady=(12, 6))
 
@@ -218,8 +226,8 @@ class AppBar(ctk.CTkFrame):
                 height=20
             ).pack(side="left", padx=(6, 0))
 
-        # Divisória
-        ctk.CTkFrame(popup, fg_color=COLORS["ink_100"], height=1).pack(fill="x")
+        ctk.CTkFrame(
+            popup, fg_color=COLORS["ink_100"], height=1).pack(fill="x")
 
         if not notificacoes:
             ctk.CTkLabel(
@@ -230,55 +238,33 @@ class AppBar(ctk.CTkFrame):
             ).pack(pady=16)
             return
 
-        # Lista de notificações
-        lista = ctk.CTkScrollableFrame(popup, fg_color="transparent", height=260)
+        lista = ctk.CTkScrollableFrame(
+            popup, fg_color="transparent", height=260)
         lista.pack(fill="both", expand=True)
 
         for notif in notificacoes:
             icone = "💬" if notif["tipo"] == "mensagem" else "🔄"
-            texto = (
-                "Nova mensagem do setor"
-                if notif["tipo"] == "mensagem"
-                else "Status atualizado"
-            )
-            item_nome = notif["item_nome"][:28] + ("…" if len(notif["item_nome"]) > 28 else "")
+            texto = "Nova mensagem do setor" if notif["tipo"] == "mensagem" else "Status updated"
+            item_nome = notif["item_nome"][:28] + \
+                ("…" if len(notif["item_nome"]) > 28 else "")
 
             row = ctk.CTkFrame(
-                lista,
-                fg_color=COLORS["magenta_50"],
-                corner_radius=10,
-                cursor="hand2"
-            )
+                lista, fg_color=COLORS["magenta_50"], corner_radius=10, cursor="hand2")
             row.pack(fill="x", padx=10, pady=4)
 
             inner_row = ctk.CTkFrame(row, fg_color="transparent")
             inner_row.pack(fill="x", padx=12, pady=8)
 
-            ctk.CTkLabel(
-                inner_row,
-                text=icone,
-                font=("Segoe UI", 18),
-                width=28
-            ).pack(side="left")
+            ctk.CTkLabel(inner_row, text=icone, font=(
+                "Segoe UI", 18), width=28).pack(side="left")
 
             info = ctk.CTkFrame(inner_row, fg_color="transparent")
             info.pack(side="left", padx=(8, 0), fill="x", expand=True)
 
-            ctk.CTkLabel(
-                info,
-                text=texto,
-                font=("Segoe UI", 11, "bold"),
-                text_color=COLORS["ink_900"],
-                anchor="w"
-            ).pack(anchor="w")
-
-            ctk.CTkLabel(
-                info,
-                text=item_nome,
-                font=("Segoe UI", 10),
-                text_color=COLORS["ink_400"],
-                anchor="w"
-            ).pack(anchor="w")
+            ctk.CTkLabel(info, text=texto, font=("Segoe UI", 11, "bold"),
+                         text_color=COLORS["ink_900"]).pack(anchor="w")
+            ctk.CTkLabel(info, text=item_nome, font=("Segoe UI", 10),
+                         text_color=COLORS["ink_400"]).pack(anchor="w")
 
             def _abrir(item_id=notif["item_id"]):
                 popup.destroy()
@@ -289,8 +275,6 @@ class AppBar(ctk.CTkFrame):
 
             for w in [row, inner_row, info]:
                 w.bind("<Button-1>", lambda e, fn=_abrir: fn())
-
-
 
 
 # ============================================
@@ -348,7 +332,6 @@ class StatCard(ctk.CTkFrame):
         inner = ctk.CTkFrame(self, fg_color="transparent")
         inner.pack(fill="both", expand=True, padx=16, pady=14)
 
-        # Ícone com fundo magenta-50
         ic_frame = ctk.CTkLabel(
             inner,
             text=icone,
@@ -360,7 +343,6 @@ class StatCard(ctk.CTkFrame):
         )
         ic_frame.pack(anchor="w")
 
-        # Número grande
         ctk.CTkLabel(
             inner,
             text=str(numero),
@@ -368,7 +350,6 @@ class StatCard(ctk.CTkFrame):
             text_color=COLORS["ink_900"]
         ).pack(anchor="w", pady=(8, 0))
 
-        # Label
         ctk.CTkLabel(
             inner,
             text=label,
@@ -403,7 +384,6 @@ class ItemCard(ctk.CTkFrame):
         inner = ctk.CTkFrame(self, fg_color="transparent")
         inner.pack(fill="both", expand=True, padx=14, pady=12)
 
-        # Thumb com ícone da categoria
         icone_cat = self._icone_categoria(item.get("categoria", ""))
         thumb = ctk.CTkLabel(
             inner,
@@ -416,11 +396,9 @@ class ItemCard(ctk.CTkFrame):
         )
         thumb.pack(side="left")
 
-        # Info do item
         info = ctk.CTkFrame(inner, fg_color="transparent")
         info.pack(side="left", fill="both", expand=True, padx=(14, 10))
 
-        # Título
         ctk.CTkLabel(
             info,
             text=item.get("nome", ""),
@@ -429,13 +407,13 @@ class ItemCard(ctk.CTkFrame):
             anchor="w"
         ).pack(anchor="w", fill="x")
 
-        # Meta
         meta_parts = []
         if mostrar_aluno and item.get("aluno_nome"):
             meta_parts.append(f"👤 {item['aluno_nome']}")
         meta_parts.append(f"📍 {item.get('local', '')}")
         if item.get("data_ocorrido"):
-            meta_parts.append(f"🗓 {self._formatar_data(item['data_ocorrido'])}")
+            meta_parts.append(
+                f"🗓 {self._formatar_data(item['data_ocorrido'])}")
         meta_parts.append(f"🏷 {item.get('categoria', '')}")
 
         meta_text = "   ".join(meta_parts)
@@ -447,12 +425,10 @@ class ItemCard(ctk.CTkFrame):
             anchor="w"
         ).pack(anchor="w", fill="x", pady=(2, 0))
 
-        # Status badge
         if item.get("status"):
             badge = StatusBadge(inner, item["status"])
             badge.pack(side="right")
 
-        # Bind clique em todos os elementos
         if on_click:
             for w in [self, inner, info, thumb]:
                 w.bind("<Button-1>", lambda e: on_click(item))
@@ -473,7 +449,6 @@ class ItemCard(ctk.CTkFrame):
 
     @staticmethod
     def _formatar_data(data_str):
-        """Formata data ISO (2026-04-22) para 22/04."""
         try:
             partes = data_str.split("-")
             return f"{partes[2]}/{partes[1]}"
@@ -499,7 +474,6 @@ class GalleryCard(ctk.CTkFrame):
         self.item = item
         self.pack_propagate(False)
 
-        # Foto (placeholder com ícone)
         foto_frame = ctk.CTkFrame(
             self,
             fg_color=COLORS["magenta_50"],
@@ -517,7 +491,6 @@ class GalleryCard(ctk.CTkFrame):
             text_color=COLORS["magenta"]
         ).pack(expand=True)
 
-        # Info
         info = ctk.CTkFrame(self, fg_color="transparent")
         info.pack(fill="both", expand=True, padx=12, pady=10)
 
@@ -560,7 +533,6 @@ class SearchBar(ctk.CTkFrame):
         )
         self.on_change = on_change
 
-        # Ícone
         ctk.CTkLabel(
             self,
             text="🔍",
@@ -568,7 +540,6 @@ class SearchBar(ctk.CTkFrame):
             text_color=COLORS["ink_400"]
         ).pack(side="left", padx=(12, 4))
 
-        # Input
         self.entry = ctk.CTkEntry(
             self,
             placeholder_text=placeholder,
@@ -577,10 +548,12 @@ class SearchBar(ctk.CTkFrame):
             font=("Segoe UI", 12),
             text_color=COLORS["ink_900"]
         )
-        self.entry.pack(side="left", fill="both", expand=True, padx=(0, 8), pady=4)
+        self.entry.pack(side="left", fill="both",
+                        expand=True, padx=(0, 8), pady=4)
 
         if on_change:
-            self.entry.bind("<KeyRelease>", lambda e: on_change(self.entry.get()))
+            self.entry.bind(
+                "<KeyRelease>", lambda e: on_change(self.entry.get()))
 
     def get(self):
         return self.entry.get()
