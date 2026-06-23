@@ -9,6 +9,23 @@ Desenvolvido em Python com CustomTkinter, SQLite e integração com a API ImgBB 
 - Python 3.10 ou superior
 - Conexão com internet (para upload de imagens via ImgBB)
 
+Recomendado: use um ambiente virtual para isolar dependências.
+
+No Windows (PowerShell):
+
+```powershell
+python -m venv .venv
+.\\.venv\\Scripts\\Activate.ps1
+pip install -r requirements.txt
+```
+
+No Windows (cmd):
+
+```cmd
+python -m venv .venv
+.venv\\Scripts\\activate
+pip install -r requirements.txt
+```
 ## 🚀 Como rodar
 
 ### 1. Instalar dependências
@@ -33,6 +50,13 @@ Se não configurar, o sistema funciona normalmente, mas as imagens ficam apenas 
 ### 3. Executar
 
 ```bash
+python main.py
+```
+
+No PowerShell (se estiver usando o venv criado acima):
+
+```powershell
+& .\\.venv\\Scripts\\Activate.ps1
 python main.py
 ```
 
