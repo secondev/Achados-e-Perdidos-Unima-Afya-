@@ -41,7 +41,7 @@ def upload_imagem(caminho_arquivo):
     try:
         # Lê o arquivo e converte para base64 (formato exigido pela API)
         with open(caminho_arquivo, "rb") as f:
-            imagem_b64 = base64.b64encode(f.read())
+            imagem_b64 = base64.b64encode(f.read()).decode("utf-8")
 
         # Faz a requisição POST para a API
         response = requests.post(
@@ -75,5 +75,5 @@ def is_url_valida(url):
     try:
         response = requests.head(url, timeout=5)
         return response.status_code == 200
-    except:
+    except Exception:
         return False
