@@ -185,6 +185,16 @@ def seed_data(conn):
             VALUES ('achado', ?, ?, ?, ?, ?, 'aberto')
         """, item)
 
+    # =========================================================================
+    # DADO DE TESTE ADICIONAL PARA ITENS EXPIRADOS (MAIS DE 30 DIAS):
+    # Cadastrando um item simulando o ano passado para testar a expiração
+    # =========================================================================
+    c.execute("""
+        INSERT INTO itens (tipo, usuario_id, nome, categoria, local, descricao, status, criado_em)
+        VALUES ('achado', 3, 'Garrafa de Alumínio Antiga', 'Garrafas/Recipientes', 'Auditório', 
+                'Garrafa esquecida há muito tempo', 'aberto', '2025-11-15 10:00:00')
+    """)
+
     # Mensagens de exemplo (para o item 1 do Leonardo - Fone)
     mensagens = [
         (1, 3, "Olá Leonardo! Recebemos sua solicitação sobre o fone. Pode descrever alguma marca distinta para confirmarmos?", None),
@@ -198,11 +208,10 @@ def seed_data(conn):
         mensagens
     )
 
-    # Atualiza status do item 1 para "encontrado" no histórico
+    # Updates extras de histórico
     c.execute("INSERT INTO historico_status (item_id, status) VALUES (1, 'analise')")
-    c.execute("INSERT INTO historico_status (item_id, status) VALUES (1, 'encontrado')")
-
-    # Atualiza item 2 para "em análise"
+    c.execute(
+        "INSERT INTO historico_status (item_id, status) VALUES (1, 'encontrado')")
     c.execute("INSERT INTO historico_status (item_id, status) VALUES (2, 'analise')")
 
     conn.commit()
@@ -213,14 +222,16 @@ def seed_data(conn):
 # ============================================
 def listar_usuarios():
     conn = get_conn()
-    rows = conn.execute("SELECT * FROM usuarios ORDER BY tipo, nome").fetchall()
+    rows = conn.execute(
+        "SELECT * FROM usuarios ORDER BY tipo, nome").fetchall()
     conn.close()
     return [dict(r) for r in rows]
 
 
 def buscar_usuario(user_id):
     conn = get_conn()
-    row = conn.execute("SELECT * FROM usuarios WHERE id = ?", (user_id,)).fetchone()
+    row = conn.execute("SELECT * FROM usuarios WHERE id = ?",
+                       (user_id,)).fetchone()
     conn.close()
     return dict(row) if row else None
 
@@ -275,11 +286,42 @@ def listar_todas_perdas(status_filtro=None, busca=None, categoria=None):
 
 
 def listar_achados_disponiveis(busca=None, categoria=None):
-    """Lista itens achados disponíveis (galeria pública)."""
+    """Lista itens achados disponíveis com menos de 30 dias (galeria pública)."""
     conn = get_conn()
+
+    # MODIFICAÇÃO PR 1: Filtra apenas itens com 30 dias ou menos usando julianday
     query = """
         SELECT * FROM itens
-        WHERE tipo = 'achado' AND status IN ('aberto', 'analise')
+        WHERE tipo = 'achado' 
+          AND status IN ('aberto', 'analise')
+          AND (julianday('now') - julianday(criado_em)) <= 30
+    """
+    params = []
+    if busca:
+        query += " AND (nome LIKE ? OR descricao LIKE ?)"
+        like = f"%{busca}%"
+        params.extend([like, like])
+    if categoria:
+        query += " AND categoria = ?"
+        params.append(categoria)
+    query += " ORDER BY criado_em DESC"
+
+    rows = conn.execute(query, params).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def listar_itens_expirados(busca=None, categoria=None):
+    """Lista itens achados que passaram do prazo de 30 dias (Para descarte/doação)."""
+    conn = get_conn()
+
+    # ADIÇÃO PR 1: Query criada especificamente para alimentar a futura tela do funcionário
+    query = """
+        SELECT *, CAST(julianday('now') - julianday(criado_em) AS INTEGER) as dias_passados
+        FROM itens
+        WHERE tipo = 'achado' 
+          AND status NOT IN ('devolvido', 'expirado')
+          AND (julianday('now') - julianday(criado_em)) > 30
     """
     params = []
     if busca:
@@ -348,7 +390,8 @@ def cadastrar_item(tipo, usuario_id, nome, categoria, local, descricao, foto_url
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'aberto')
     """, (tipo, usuario_id, nome, categoria, local, descricao, foto_url, data_ocorrido))
     item_id = c.lastrowid
-    c.execute("INSERT INTO historico_status (item_id, status) VALUES (?, 'aberto')", (item_id,))
+    c.execute(
+        "INSERT INTO historico_status (item_id, status) VALUES (?, 'aberto')", (item_id,))
     conn.commit()
     conn.close()
 
@@ -397,7 +440,8 @@ def atualizar_status(item_id, novo_status):
         (item_id, novo_status)
     )
     # Notifica o aluno dono do item sobre a mudança de status
-    item = conn.execute("SELECT usuario_id FROM itens WHERE id = ?", (item_id,)).fetchone()
+    item = conn.execute(
+        "SELECT usuario_id FROM itens WHERE id = ?", (item_id,)).fetchone()
     if item:
         c.execute("""
             INSERT INTO notificacoes (usuario_id, item_id, tipo)
@@ -432,14 +476,17 @@ def contar_status(usuario_id):
         GROUP BY status
     """, (usuario_id,)).fetchall()
 
-    contadores = {"aberto": 0, "analise": 0, "encontrado": 0, "devolvido": 0, "naoachado": 0}
+    contadores = {"aberto": 0, "analise": 0,
+                  "encontrado": 0, "devolvido": 0, "naoachado": 0}
     for r in rows:
         contadores[r["status"]] = r["total"]
 
-    # Total de achados disponíveis
+    # Total de achados disponíveis (Atualizado para respeitar a nova regra de 30 dias)
     achados = c.execute("""
         SELECT COUNT(*) as total FROM itens
-        WHERE tipo = 'achado' AND status IN ('aberto', 'analise')
+        WHERE tipo = 'achado' 
+          AND status IN ('aberto', 'analise')
+          AND (julianday('now') - julianday(criado_em)) <= 30
     """).fetchone()
     contadores["disponiveis"] = achados["total"]
 
@@ -474,8 +521,10 @@ def enviar_mensagem(item_id, remetente_id, texto, foto_url=None):
     """, (item_id, remetente_id, texto, foto_url))
 
     # Cria notificação para o aluno dono do item (só se quem enviou for funcionário)
-    item = conn.execute("SELECT usuario_id FROM itens WHERE id = ?", (item_id,)).fetchone()
-    remetente = conn.execute("SELECT tipo FROM usuarios WHERE id = ?", (remetente_id,)).fetchone()
+    item = conn.execute(
+        "SELECT usuario_id FROM itens WHERE id = ?", (item_id,)).fetchone()
+    remetente = conn.execute(
+        "SELECT tipo FROM usuarios WHERE id = ?", (remetente_id,)).fetchone()
     if item and remetente and remetente["tipo"] == "funcionario":
         c.execute("""
             INSERT INTO notificacoes (usuario_id, item_id, tipo)
@@ -555,7 +604,6 @@ def reset_db():
 # ============================================
 # FUNÇÕES DE ESTATÍSTICAS (NOVO DASHBOARD)
 # ============================================
-
 def get_itens_por_categoria():
     """Conta a quantidade total de itens (perdas e achados) agrupados por categoria."""
     conn = get_conn()
@@ -615,7 +663,6 @@ def get_tempo_medio_resolucao():
 # ============================================
 # FUNÇÕES DE NOTIFICAÇÕES
 # ============================================
-
 def contar_notificacoes(usuario_id):
     """Conta quantas notificações não lidas o aluno tem."""
     conn = get_conn()
