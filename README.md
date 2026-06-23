@@ -2,7 +2,7 @@
 
 Sistema de gestão de itens perdidos para o **Centro Universitário Afya Unima Maceió**.
 
-**🔗 Vitrine web do projeto:** (https://achados-e-perdidos-unima-afya-1c1yto2sy.vercel.app/)
+**🔗 Vitrine web do projeto:** (https://achados-e-perdidos-unima-afya.vercel.app/)
 
 ---
 
