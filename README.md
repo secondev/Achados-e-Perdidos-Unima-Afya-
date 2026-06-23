@@ -295,3 +295,30 @@ Veja [LICENSE](./LICENSE). Projeto acadêmico do Centro Universitário Afya Unim
 ## 🤝 Contribuição
 
 Veja [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) e o [CHANGELOG.md](./CHANGELOG.md) para histórico de versões.
+
+---
+
+## 🤝 Como contribuir
+
+Quer contribuir com o projeto? Siga estes passos:
+
+1. Faça um *fork* deste repositório
+2. Crie uma *branch* para sua feature: git checkout -b feature/minha-feature
+3. Faça suas alterações e *commit*: git commit -m "feat: descrição da feature"
+4. *Push* para a sua branch: git push origin feature/minha-feature
+5. Abra um *Pull Request* explicando suas alterações
+
+### Padrões de commit
+
+Usamos o padrão *Conventional Commits*:
+
+- feat: para novas funcionalidades
+- fix: para correções de bugs
+- docs: para mudanças na documentação
+- style: para mudanças de formatação
+- refactor: para refatoração de código
+- test: para adição de testes
+- chore: para tarefas de manutenção
+
+---
+
