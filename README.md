@@ -1,4 +1,4 @@
-# 🌸 Achados Unima Afya
+# Achados Unima Afya
 
 Sistema de gestão de itens perdidos para o **Centro Universitário Afya Unima Maceió**.
 
